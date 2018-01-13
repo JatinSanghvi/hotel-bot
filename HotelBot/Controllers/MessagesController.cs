@@ -18,7 +18,7 @@ namespace HotelBot
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                await Conversation.SendAsync(activity, () => new GreetingsDialog());
+                await Conversation.SendAsync(activity, HotelBotDialog.Dialog);
             }
             else
             {

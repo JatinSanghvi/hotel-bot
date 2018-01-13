@@ -1,0 +1,57 @@
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.FormFlow;
+
+using static HotelBot.DataBagKey;
+
+namespace HotelBot
+{
+    internal static class HotelBotDialog
+    {
+        public static IDialog<string> Dialog()
+        {
+            IDialog<string> dialog = Chain.PostToChain().Select(message => message.Text);
+
+            dialog = dialog
+                .Switch(
+                    new RegexCase<IDialog<string>>(new Regex(@"^hi(?:\s|$)", RegexOptions.IgnoreCase), GreetingSelector),
+                    new DefaultCase<string, IDialog<string>>(RoomReservationSelector)).Unwrap();
+
+            dialog = dialog.PostToUser();
+
+            return dialog;
+        }
+
+
+        private static readonly ContextualSelector<string, IDialog<string>> GreetingSelector =
+            (context, text) => Chain.ContinueWith(new GreetingsDialog(), GreetingContinuation);
+
+        private static readonly ContextualSelector<string, IDialog<string>> RoomReservationSelector =
+            (context, text) => Chain.ContinueWith(
+                   FormDialog.FromForm(RoomReservation.BuildForm, FormOptions.PromptInStart), RoomReservationContinuation);
+
+        private async static Task<IDialog<string>> GreetingContinuation(IBotContext context, IAwaitable<object> item)
+        {
+            await item;
+
+            return Chain.Return<string>($"Please enter any text to begin room reservation.");
+        }
+
+        private async static Task<IDialog<string>> RoomReservationContinuation(IBotContext context, IAwaitable<object> item)
+        {
+            await item;
+
+            string userName = DataBagHelper.GetValue<string>(context, UserName);
+
+            if (string.IsNullOrEmpty(userName))
+            {
+                return Chain.Return<string>("Thanks. We have booked reservation for you.");
+            }
+            else
+            {
+                return Chain.Return<string>($"Thanks, {userName}. We have booked reservation for you.");
+            }
+        }
+    }
+}
