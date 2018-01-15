@@ -11,14 +11,13 @@ namespace HotelBot
     {
         public static IDialog<string> Dialog()
         {
-            IDialog<string> dialog = Chain.PostToChain().Select(message => message.Text);
-
-            dialog = dialog
+            IDialog<string> dialog = Chain.PostToChain()
+                .Select(message => message.Text)
                 .Switch(
                     new RegexCase<IDialog<string>>(new Regex(@"^hi(?:\s|$)", RegexOptions.IgnoreCase), GreetingSelector),
-                    new DefaultCase<string, IDialog<string>>(RoomReservationSelector)).Unwrap();
-
-            dialog = dialog.PostToUser();
+                    new DefaultCase<string, IDialog<string>>(RoomReservationSelector))
+                .Unwrap()
+                .PostToUser();
 
             return dialog;
         }
@@ -35,7 +34,7 @@ namespace HotelBot
         {
             await item;
 
-            return Chain.Return<string>($"Please enter any text to begin room reservation.");
+            return Chain.Return<string>("How can I help you?");
         }
 
         private async static Task<IDialog<string>> RoomReservationContinuation(IBotContext context, IAwaitable<object> item)
